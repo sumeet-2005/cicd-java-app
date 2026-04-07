@@ -11,20 +11,20 @@ import org.springframework.http.ResponseEntity;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class TaskControllerTest {
+class TaskControllerTest {
     
     @Autowired
     private TestRestTemplate restTemplate;
     
     @Test
-    public void testHealthCheck() {
+    void testHealthCheck() {
         ResponseEntity<String> response = restTemplate.getForEntity("/api/tasks/health", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo("OK");
     }
     
     @Test
-    public void testCreateAndGetTask() {
+    void testCreateAndGetTask() {
         Task task = new Task("Test Task", "Test Description");
         
         ResponseEntity<Task> createResponse = restTemplate.postForEntity("/api/tasks", task, Task.class);
@@ -39,14 +39,14 @@ public class TaskControllerTest {
     }
     
     @Test
-    public void testGetAllTasks() {
+    void testGetAllTasks() {
         ResponseEntity<Task[]> response = restTemplate.getForEntity("/api/tasks", Task[].class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
     }
     
     @Test
-    public void testDeleteTask() {
+    void testDeleteTask() {
         Task task = new Task("Delete Me", "Will be deleted");
         
         ResponseEntity<Task> createResponse = restTemplate.postForEntity("/api/tasks", task, Task.class);
@@ -59,7 +59,7 @@ public class TaskControllerTest {
     }
     
     @Test
-    public void testCreateTaskWithEmptyTitle() {
+    void testCreateTaskWithEmptyTitle() {
         Task task = new Task("", "No title");
         ResponseEntity<Task> response = restTemplate.postForEntity("/api/tasks", task, Task.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
