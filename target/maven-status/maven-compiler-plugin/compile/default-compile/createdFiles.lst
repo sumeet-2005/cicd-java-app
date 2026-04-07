@@ -1,0 +1,3 @@
+com/cicd/app/CicdJavaAppApplication.class
+com/cicd/app/controller/TaskController.class
+com/cicd/app/model/Task.class

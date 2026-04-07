@@ -1,0 +1,84 @@
+name: Java CI/CD Pipeline with SonarQube
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build, Test & SonarQube
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+    
+    - name: Build and run tests
+      run: mvn clean verify
+    
+    - name: SonarQube Scan
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        mvn sonar:sonar \
+          -Dsonar.projectKey=sumeet-2005_cicd-java-app \
+          -Dsonar.organization=sumeet-2005 \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.token=$SONAR_TOKEN
+
+  docker-build-push:
+    name: Build & Push Docker Image
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/cicd-java-app:latest
+          ${{ secrets.DOCKER_USERNAME }}/cicd-java-app:${{ github.sha }}
+
+  deploy:
+    name: Deploy to Render
+    needs: docker-build-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Trigger Render Deploy
+      run: |
+        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
