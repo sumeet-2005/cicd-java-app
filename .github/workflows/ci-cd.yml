@@ -72,13 +72,3 @@ jobs:
           ${{ secrets.DOCKER_USERNAME }}/cicd-java-app:latest
           ${{ secrets.DOCKER_USERNAME }}/cicd-java-app:${{ github.sha }}
 
-  deploy:
-    name: Deploy to Render
-    needs: docker-build-push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: Trigger Render Deploy
-      run: |
-        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
