@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_IMAGE = 'sumeet-2005/cicd-java-app'
+        DOCKER_IMAGE = 'sumeet2005/cicd-java-app'
         DOCKER_TAG = "${BUILD_NUMBER}"
         SONAR_PROJECT_KEY = 'sumeet-2005_cicd-java-app'
         SONAR_ORGANIZATION = 'sumeet-2005'
