@@ -6,6 +6,7 @@ pipeline {
         DOCKER_TAG = "${BUILD_NUMBER}"
         SONAR_PROJECT_KEY = 'sumeet-2005_cicd-java-app'
         SONAR_ORGANIZATION = 'sumeet-2005'
+        MAVEN_OPTS = '-Xmx2048m -Dsonar.ws.timeout=120 -Dsonar.scanner.timeout=120'
     }
     
     stages {
@@ -49,7 +50,9 @@ pipeline {
                         mvn sonar:sonar \
                         -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
                         -Dsonar.organization=${SONAR_ORGANIZATION} \
-                        -Dsonar.host.url=https://sonarcloud.io
+                        -Dsonar.host.url=https://sonarcloud.io \
+                        -Dsonar.ws.timeout=180 \
+                        -Dsonar.scanner.timeout=180
                     '''
                 }
                 echo '✅ SonarQube analysis completed'
@@ -91,11 +94,22 @@ pipeline {
             }
         }
         
-        stage('8. Notify Success') {
+        stage('8. Quality Gate Check') {
+            steps {
+                echo '📊 Checking Quality Gate status...'
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: false
+                }
+                echo '✅ Quality Gate check completed'
+            }
+        }
+        
+        stage('9. Notify Success') {
             steps {
                 echo '🎉 Pipeline completed successfully!'
                 echo "Docker Image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 echo "SonarQube Report: https://sonarcloud.io/project/overview?id=${SONAR_PROJECT_KEY}"
+                echo "Application running at: http://localhost:8081"
             }
         }
     }
@@ -103,6 +117,10 @@ pipeline {
     post {
         failure {
             echo '❌ Pipeline failed! Check the logs above.'
+            error 'Pipeline execution failed'
+        }
+        success {
+            echo '🎉 All stages completed successfully!'
         }
         always {
             echo '🏁 Pipeline execution finished'
